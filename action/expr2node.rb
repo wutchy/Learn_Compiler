@@ -1,4 +1,5 @@
 require './lexer'
+require './nodeeval'
 
 class Parser
   def initialize(lexer)
@@ -29,74 +30,49 @@ class Parser
     case @token
     when :lpar
       checktoken("mF",:lpar)
-      val = mE()
+      n = mE()
       checktoken("mF",:rpar)
     when :num
-      val = @lexime.to_i
+      n = NUM.new(@lexime)
       checktoken("mF",:num)
     else
       puts "syntax error (mF): num or lpar is expected"
       exit(1)
     end
-    val
+    n
   end
 
   def mT()
-    val = mF()
+    tmp = mF()
     while @token == :mult do
       checktoken("mT", :mult)
-      val *= mF()
+      tmp = MULT(tmp, mF())
     end
-    val
+    tmp
   end
 
   def mE()
-    val = mT()
+    tmp = mT()
     while @token == :plus do
       checktoken("mE",:plus)
-      val += mT()
+      tmp = PLUS(tmp, mT())
     end
-    val
+    tmp
   end
 end
 
 lexer = Lexer.new($stdin)
 parser = Parser.new(lexer)
-puts parser.parse
-class NUM
-  def initialize(n)
-    @n = n
-  end
+#puts parser.parse.eval
+t = parser.parse
 
-  def eval
-    return @n.to_i
-  end
-end
+puts "eval"
+puts t.eval
 
-class BinOp
-  def initialize(l, r)
-    @l = l
-    @r = r
-  end
-end
+puts ""
+puts "prefix"
+puts t.prefix
 
-class PLUS < BinOp
-  def eval
-    return @l.eval + @r.eval
-  end
-end
-
-class MULT < BinOp
-  def eval
-    return @l.eval * @r.eval
-  end
-end
-
-n1 = NUM.new("1")
-n2 = NUM.new("2")
-n3 = NUM.new("3")
-
-nm = MULT.new(n2,n3)
-np = PLUS.new(n1,nm)
-
-puts np.eval
+puts ""
+puts "postfix"
+puts t.postfix
